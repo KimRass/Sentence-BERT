@@ -2,7 +2,7 @@ import pandas as pd
 import torch
 
 
-def get_nli_dataset(txt_path, tokenizer):
+def get_nli_ds(txt_path, tokenizer):
     df = pd.read_csv(txt_path, sep="\t", keep_default_na=False, on_bad_lines="skip", low_memory=False)
 
     df = df[["sentence1", "sentence2", "gold_label"]]
@@ -27,7 +27,7 @@ class NLICollator(object):
         self.sep_id = tokenizer.token_to_id("[SEP]")
         self.pad_id = tokenizer.token_to_id("[PAD]")
 
-    def _truncate_or_pad(self, token_ids, max_len):
+    def truncate_or_pad(self, token_ids, max_len):
         if len(token_ids) <= max_len:
             token_ids = token_ids + [self.pad_id] * (max_len - len(token_ids))
         else:
@@ -40,8 +40,8 @@ class NLICollator(object):
 
         ps, hs, labels = list(), list(), list()
         for p, h, label in batch:
-            p = self._truncate_or_pad(token_ids=p, max_len=p_max_len)
-            h = self._truncate_or_pad(token_ids=h, max_len=h_max_len)
+            p = self.truncate_or_pad(token_ids=p, max_len=p_max_len)
+            h = self.truncate_or_pad(token_ids=h, max_len=h_max_len)
 
             ps.append(p)
             hs.append(h)

@@ -1,11 +1,21 @@
 # References
-    # http://ixa2.si.ehu.eus/stswiki/index.php/STSbenchmark
+    # http://ixa2.si.ehu.eus/stswiki/index.php/STSb
 
 import torch
 from torch.utils.data import Dataset
 
 
-class STSbenchmarkDataset(Dataset):
+class STSbDataset(Dataset):
+    @staticmethod
+    def _normalize_score(score):
+        score -= 2.5
+        score /= 2.5
+        return score
+
+    @staticmethod
+    def _get_length(x):
+        return (x != 0).sum(dim=1)
+
     def __init__(self, csv_path, tokenizer, max_len):
         self.csv_path = csv_path
         self.tokenizer = tokenizer
@@ -27,12 +37,18 @@ class STSbenchmarkDataset(Dataset):
                 sents1.append(sent1)
                 sents2.append(sent2)
                 
-        self.seq1 = torch.as_tensor(tokenizer(sents1, padding="max_length", max_length=max_len)["input_ids"])
-        self.seq2 = torch.as_tensor(tokenizer(sents2, padding="max_length", max_length=max_len)["input_ids"])
+        self.seq1 = torch.as_tensor(
+            tokenizer(sents1, padding="max_length", max_length=max_len)["input_ids"]
+        )
+        self.seq2 = torch.as_tensor(
+            tokenizer(sents2, padding="max_length", max_length=max_len)["input_ids"]
+        )
 
         # "We implemented a smart batching strategy: Sentences with similar lengths are grouped together"
         # in the section 7 of the paper.
-        order = torch.argsort(self._get_length(self.seq1) + self._get_length(self.seq1))
+        order = torch.argsort(
+            self._get_length(self.seq1) + self._get_length(self.seq1)
+        )
         self.seq1 = self.seq1[order]
         self.seq2 = self.seq2[order]
 
@@ -42,16 +58,8 @@ class STSbenchmarkDataset(Dataset):
     def __getitem__(self, idx):
         return self.scores[idx], self.seq1[idx], self.seq2[idx]
 
-    def _normalize_score(self, score):
-        score -= 2.5
-        score /= 2.5
-        return score
 
-    def _get_length(self, x):
-        return (x != 0).sum(dim=1)
-
-
-class STSbenchmarkCollator(object):
+class STSbCollator(object):
     def __init__(self, tokenizer):
         self.tokenizer = tokenizer
     

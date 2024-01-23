@@ -10,7 +10,7 @@ import random
 from copy import deepcopy
 
 
-def _group_by_sections(wiki_data, tokenizer):
+def group_by_sections(wiki_data, tokenizer):
     cls_id = tokenizer.token_to_id("[CLS]")
     sep_id = tokenizer.token_to_id("[SEP]")
 
@@ -25,7 +25,7 @@ def _group_by_sections(wiki_data, tokenizer):
     return sec2sents
 
 
-def _sample_positive_sentence(sec2sents, anchor_sec, anchor):
+def sample_pos_sent(sec2sents, anchor_sec, anchor):
     sents = sec2sents[anchor_sec]
     pos = deepcopy(anchor)
     while pos == anchor:
@@ -33,7 +33,7 @@ def _sample_positive_sentence(sec2sents, anchor_sec, anchor):
     return pos
 
 
-def _sample_negative_sentence(sec2sents, anchor_sec):
+def sample_neg_sent(sec2sents, anchor_sec):
     secs = list(sec2sents)
     neg_sec = deepcopy(anchor_sec)
     while neg_sec == anchor_sec:
@@ -42,16 +42,16 @@ def _sample_negative_sentence(sec2sents, anchor_sec):
     return neg
 
 
-def get_wikisection_dataset(json_path, tokenizer):
+def get_wikisection_ds(json_path, tokenizer):
     with open(json_path, mode="r") as f:
         wiki_data = jsonable_encoder(json.load(f))
-        sec2sents = _group_by_sections(wiki_data, tokenizer=tokenizer)
+        sec2sents = group_by_sections(wiki_data, tokenizer=tokenizer)
 
     ds = list()
     for anchor_sec in sec2sents.keys():
         for anchor in sec2sents[anchor_sec]:
-            pos = _sample_positive_sentence(sec2sents=sec2sents, anchor_sec=anchor_sec, anchor=anchor)
-            neg = _sample_negative_sentence(sec2sents=sec2sents, anchor_sec=anchor_sec)
+            pos = sample_pos_sent(sec2sents=sec2sents, anchor_sec=anchor_sec, anchor=anchor)
+            neg = sample_neg_sent(sec2sents=sec2sents, anchor_sec=anchor_sec)
 
             ds.append((anchor, pos, neg))
     return ds
